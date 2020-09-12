@@ -28,15 +28,12 @@ namespace ConstraintChanger
         const string OutputAssembly = InputAssembly;
         const string OutputDirectory = @"../../../Rewritten";
 
-        private static readonly string[] SdkPaths = 
+        private static readonly string[] SdkPaths =
         {
-            @"Microsoft SDKs\Windows\v6.0A\bin",
-            @"Microsoft SDKs\Windows\v7\bin",
-            @"Microsoft SDKs\Windows\v7.0A\bin",
-            @"Microsoft SDKs\Windows\v8.0\bin",
-            @"Microsoft SDKs\Windows\v8.0A\bin",
-            @"Microsoft SDKs\Windows\v8.1\bin",
-            @"Microsoft SDKs\Windows\v8.1A\bin",
+            @"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools",
+            @"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7.2 Tools",
+            @"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7 Tools",
+            @"C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.2 Tools",
         };
 
         static int Main()
@@ -45,15 +42,20 @@ namespace ConstraintChanger
             if (ildasmExe == null)
             {
                 // Error message will already have been written
-                return 1;                 
+                return 1;
             }
             string windows = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            string framework4Directory = Path.Combine(windows, @"..\Microsoft.NET\Framework\v4.0.30319");
             string framework2Directory = Path.Combine(windows, @"..\Microsoft.NET\Framework\v2.0.50727");
-            string ilasmExe = Path.Combine(framework2Directory, "ilasm.exe");
+            string ilasmExe = Path.Combine(framework4Directory, "ilasm.exe");
             if (!File.Exists(ilasmExe))
             {
-                Console.WriteLine("Can't find ilasm. Aborting. Expected it at: {0}", ilasmExe);
-                return 1;
+                ilasmExe = Path.Combine(framework2Directory, "ilasm.exe"); ;
+                if (!File.Exists(ilasmExe))
+                {
+                    Console.WriteLine("Can't find ilasm. Aborting. Expected it at: {0}", ilasmExe);
+                    return 1;
+                }
             }
 
             try
@@ -72,20 +74,31 @@ namespace ConstraintChanger
 
         private static string FindIldasm()
         {
-            string[] programFiles = new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                                            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) };
-            foreach (string root in programFiles)
+            //string[] programFiles = new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            //                                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86) };
+            //foreach (string root in programFiles)
+            //{
+            //    foreach (string sdkPath in SdkPaths)
+            //    {
+            //        string directory = Path.Combine(root, sdkPath);
+            //        if (Directory.Exists(directory))
+            //        {
+            //            string ildasm = Path.Combine(directory, "ildasm.exe");
+            //            if (File.Exists(ildasm))
+            //            {
+            //                return ildasm;
+            //            }
+            //        }
+            //    }
+            //}
+            foreach (string sdkPath in SdkPaths)
             {
-                foreach (string sdkPath in SdkPaths)
+                if (Directory.Exists(sdkPath))
                 {
-                    string directory = Path.Combine(root, sdkPath);
-                    if (Directory.Exists(directory))
+                    string ildasm = Path.Combine(sdkPath, "ildasm.exe");
+                    if (File.Exists(ildasm))
                     {
-                        string ildasm = Path.Combine(directory, "ildasm.exe");
-                        if (File.Exists(ildasm))
-                        {
-                            return ildasm;
-                        }
+                        return ildasm;
                     }
                 }
             }
